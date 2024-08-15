@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Downloading website’s files with an LFI Bypass using symlinks</title><style>
+      * {
+        font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        font-size: 50px;
+        margin-bottom: 17px;
+        color: #333;
+      }
+      h2 {
+        font-size: 24px;
+        line-height: 1.6;
+        margin: 30px 0 0 0;
+        margin-bottom: 18px;
+        margin-top: 33px;
+        color: #333;
+      }
+      h3 {
+        font-size: 30px;
+        margin: 10px 0 20px 0;
+        color: #333;
+      }
+      header {
+        width: 640px;
+        margin: auto;
+      }
+      section {
+        width: 640px;
+        margin: auto;
+      }
+      section p {
+        margin-bottom: 27px;
+        font-size: 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      section img {
+        max-width: 640px;
+      }
+      footer {
+        padding: 0 20px;
+        margin: 50px 0;
+        text-align: center;
+        font-size: 12px;
+      }
+      .aspectRatioPlaceholder {
+        max-width: auto !important;
+        max-height: auto !important;
+      }
+      .aspectRatioPlaceholder-fill {
+        padding-bottom: 0 !important;
+      }
+      header,
+      section[data-field=subtitle],
+      section[data-field=description] {
+        display: none;
+      }
+      </style></head><body><article class="h-entry">
+<header>
+<h1 class="p-name">Downloading website’s files with an LFI Bypass using symlinks</h1>
+</header>
+<section data-field="subtitle" class="p-summary">
+2024 N00bzCTF File Sharing Portal Writeup
+</section>
+<section data-field="body" class="e-content">
+<section name="8c67" class="section section--body section--first section--last"><div class="section-divider"><hr class="section-divider"></div><div class="section-content"><div class="section-inner sectionLayout--insetColumn"><h3 name="c338" id="c338" class="graf graf--h3 graf--leading graf--title">Downloading website’s files with an LFI Bypass using symlinks</h3><h3 name="7664" id="7664" class="graf graf--h3 graf-after--h3">2024 N00bzCTF File Sharing Portal Writeup</h3><p name="ed4c" id="ed4c" class="graf graf--p graf-after--h3">Writeup of how the file sharing portal that only allows .TAR files was abused to LFI via SYMLINKS and using /proc to leverage the flag’s file name.</p><p name="759a" id="759a" class="graf graf--p graf-after--p">When we start off we’re given a few files among these files is a Dockerfile which has some commands that are run, and gives us hints on our directory tree.</p><figure name="4fc0" id="4fc0" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*MFiNz6RED0N5ViQdAZeeeQ.png" data-width="1464" data-height="790" data-is-featured="true" src="https://cdn-images-1.medium.com/max/800/1*MFiNz6RED0N5ViQdAZeeeQ.png"><figcaption class="imageCaption">Dockerfiles are useful as they help you map out the environment, general logic, and directory tree of your target.</figcaption></figure><p name="e0ff" id="e0ff" class="graf graf--p graf-after--figure">The first thing that caught my eye was “REDACTED.txt”, so clearly we need to get LFI, because with RCE we could just do “ls”, so this hint tells me we have a possible LFI and need to figure out the flag’s file name as the extra challenge.</p><p name="aa13" id="aa13" class="graf graf--p graf-after--p">Now it was time to look at the server code which is written in Flask.</p><figure name="bae9" id="bae9" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*96FgQEqOfLlXxy-DtX8e9Q.png" data-width="1600" data-height="1343" src="https://cdn-images-1.medium.com/max/800/1*96FgQEqOfLlXxy-DtX8e9Q.png"></figure><figure name="4566" id="4566" class="graf graf--figure graf-after--figure"><img class="graf-image" data-image-id="1*5yo9CBKfQ7NUY2YWgaDZ3Q.png" data-width="1400" data-height="1058" src="https://cdn-images-1.medium.com/max/800/1*5yo9CBKfQ7NUY2YWgaDZ3Q.png"></figure><p name="8547" id="8547" class="graf graf--p graf-after--figure">After reading the code I realized we’re only able to upload .TAR files. TAR files are similar to ZIP, they’re just compressed collection of files. At first I thought maybe RCE is possible because the server does not check the contents of the TAR files we upload, which means we may be able to upload a web shell or reverse shell. However, I then realized this is NOT PHP this is Python! Moreover, the server does not run any of the files, it uses Python’s .read() function to just read the contents of it (as a side note we could upload phishing pages on this since HTML files can be uploaded, but that’s my bug bounty mind speaking!)</p><p name="6cd0" id="6cd0" class="graf graf--p graf-after--p">Since our goal is to disclose the flag file we’re gonna need to get LFI, after reading the code there’s no way to traverse the read() function because it has some checks for “..” and “/” payloads. You may be thinking “why don’t we just URL encode our LFI payloads then?”-and you would be right-for PHP-Python by default will not URL decode the payloads the way we need it to for LFI.</p><p name="61de" id="61de" class="graf graf--p graf-after--p">Therefore, after some thinking I realized Linux has this special type of file called “symlinks”, they’re like your normal shortcut files on windows “.LNK”. These are awesome because we can create a symlink that has a shortcut to any file we want and when the server reads the symlink, it’ll actually read the file it’s pointing to!</p><p name="5d2b" id="5d2b" class="graf graf--p graf-after--p">To test my theory I made a symlink to get the “/etc/passwd” file using this command on Mac OS X:</p><figure name="dcaa" id="dcaa" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*ZSjMvem1phei_bHghjB0Tw.png" data-width="1170" data-height="70" src="https://cdn-images-1.medium.com/max/800/1*ZSjMvem1phei_bHghjB0Tw.png"></figure><p name="8563" id="8563" class="graf graf--p graf-after--figure">Then I compressed it to a TAR (the only VALID file type allowed by the server)</p><figure name="f5ac" id="f5ac" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*V43bZQNuLd9R48gKfe_RnA.png" data-width="1180" data-height="70" src="https://cdn-images-1.medium.com/max/800/1*V43bZQNuLd9R48gKfe_RnA.png"></figure><p name="438d" id="438d" class="graf graf--p graf-after--figure">Then I uploaded it and checked to see if I could read the /etc/passwd file:</p><figure name="6e3f" id="6e3f" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*-UMDOTwum3lvAYL1RX0g5A.png" data-width="2502" data-height="542" src="https://cdn-images-1.medium.com/max/800/1*-UMDOTwum3lvAYL1RX0g5A.png"><figcaption class="imageCaption">SUCCESS! Okay, now we need to get the flag.</figcaption></figure><p name="3a33" id="3a33" class="graf graf--p graf-after--figure">In order to retrieve the flag we need to figure out WHERE the flag is. So I took a look at the Dockerfile we were given and realized the flag file is in the same file as “requirements.txt”, so if I could figure out where that file is I would be in the same directory as our flag file and would just need to figure out what the flag’s name is. Since I don’t want to figure out the absolute path I settled for relative path traversal using “../”. After some testing I realized we needed to go back 2 directories to be in the same directory as the flag file.</p></div><div class="section-inner sectionLayout--outsetRow" data-paragraph-count="2"><figure name="9c54" id="9c54" class="graf graf--figure graf--layoutOutsetRow is-partialWidth graf-after--p" style="width: 78.716%;"><img class="graf-image" data-image-id="1*yuTpma99fwlNuOsGwAQiCg.png" data-width="1236" data-height="132" src="https://cdn-images-1.medium.com/max/1000/1*yuTpma99fwlNuOsGwAQiCg.png"></figure><figure name="d06b" id="d06b" class="graf graf--figure graf--layoutOutsetRowContinue is-partialWidth graf-after--figure" style="width: 21.284%;"><img class="graf-image" data-image-id="1*cdVyHVfcfTWabWRscI1SIg.png" data-width="562" data-height="222" src="https://cdn-images-1.medium.com/max/400/1*cdVyHVfcfTWabWRscI1SIg.png"></figure></div><div class="section-inner sectionLayout--insetColumn"><p name="a90b" id="a90b" class="graf graf--p graf-after--figure">The requirements.txt file is a file that stores all the required third-party Python modules needed, this checks out since we know the server is running Flask and the requirements.txt file has Flask in it, we now know we’re in the same directory as the flag file. Again. we know we’re in the same directory as the flag file because of our Dockerfile telling us they’re both in the /app/ folder.</p></div><div class="section-inner sectionLayout--outsetRow" data-paragraph-count="2"><figure name="0808" id="0808" class="graf graf--figure graf--layoutOutsetRow is-partialWidth graf-after--p" style="width: 60.273%;"><img class="graf-image" data-image-id="1*GPg7aodrLo-wRDcjLjPF5w.png" data-width="1012" data-height="70" src="https://cdn-images-1.medium.com/max/800/1*GPg7aodrLo-wRDcjLjPF5w.png"></figure><figure name="a877" id="a877" class="graf graf--figure graf--layoutOutsetRowContinue is-partialWidth graf-after--figure" style="width: 39.727%;"><img class="graf-image" data-image-id="1*PLklY5QctxyewooR6dY0uw.png" data-width="648" data-height="68" src="https://cdn-images-1.medium.com/max/600/1*PLklY5QctxyewooR6dY0uw.png"><figcaption class="imageCaption" style="width: 251.718%; left: -151.718%;"><strong class="markup--strong markup--figure-strong">copy … /app/</strong></figcaption></figure></div><div class="section-inner sectionLayout--insetColumn"><p name="d822" id="d822" class="graf graf--p graf-after--figure">Now this is where I got stumped initially-how do I get the flag’s file name? I spent over an hour trying to abuse the <strong class="markup--strong markup--p-strong">“/view” </strong>route in hopes of exposing the name, but the line of code that prevents us from viewing any directory is the following:</p><figure name="fcf3" id="fcf3" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*-cOnudjlODzXbKdHX-XmDg.png" data-width="836" data-height="48" src="https://cdn-images-1.medium.com/max/800/1*-cOnudjlODzXbKdHX-XmDg.png"></figure><p name="4708" id="4708" class="graf graf--p graf-after--figure">this will only allow all characters in that range and this fits the range of the hashes they’re using.</p><p name="a7e1" id="a7e1" class="graf graf--p graf-after--p">After some googling, it turns out Linux stores the filesystems mounted in /proc/mounts.</p></div><div class="section-inner sectionLayout--outsetRow" data-paragraph-count="2"><figure name="a0b8" id="a0b8" class="graf graf--figure graf--layoutOutsetRow is-partialWidth graf-after--p" style="width: 56.857%;"><img class="graf-image" data-image-id="1*ykn9Sshy2X4ganEUSkSivw.png" data-width="1434" data-height="172" src="https://cdn-images-1.medium.com/max/800/1*ykn9Sshy2X4ganEUSkSivw.png"></figure><figure name="0fde" id="0fde" class="graf graf--figure graf--layoutOutsetRowContinue is-partialWidth graf-after--figure" style="width: 43.143%;"><img class="graf-image" data-image-id="1*PIs3IqBfbCmh_Ops5DQYLA.png" data-width="3024" data-height="478" src="https://cdn-images-1.medium.com/max/600/1*PIs3IqBfbCmh_Ops5DQYLA.png"><figcaption class="imageCaption" style="width: 231.787%; left: -131.787%;">There it is! The flag name</figcaption></figure></div><div class="section-inner sectionLayout--insetColumn"><p name="3f45" id="3f45" class="graf graf--p graf-after--figure">From here, it was quite easy, after some simple CRTL+F for “flag” I could see a “flag…..txt” file mounted, I simply made a new symlink for it, uploaded the TAR file, and viewed my acquired flag.</p><figure name="9c4b" id="9c4b" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*FQtLVeXBmoVh3ShXou6tEA.png" data-width="1322" data-height="144" src="https://cdn-images-1.medium.com/max/800/1*FQtLVeXBmoVh3ShXou6tEA.png"></figure></div><div class="section-inner sectionLayout--outsetColumn"><figure name="229e" id="229e" class="graf graf--figure graf--layoutOutsetCenter graf-after--figure"><img class="graf-image" data-image-id="1*Uf5jJcrTCsypD_2Ljn_-Ug.png" data-width="2958" data-height="462" src="https://cdn-images-1.medium.com/max/1200/1*Uf5jJcrTCsypD_2Ljn_-Ug.png"></figure></div><div class="section-inner sectionLayout--insetColumn"><figure name="4a03" id="4a03" class="graf graf--figure graf-after--figure"><img class="graf-image" data-image-id="1*UeJLKWMtLskfT0BdjDVLBQ.png" data-width="2534" data-height="592" src="https://cdn-images-1.medium.com/max/800/1*UeJLKWMtLskfT0BdjDVLBQ.png"></figure><p name="adb9" id="adb9" class="graf graf--p graf-after--figure">And with that, the Web category was finally cleared, now I could move onto the next with my team!</p><p name="8b26" id="8b26" class="graf graf--p graf-after--p graf--trailing">This was my first ever CTF, and I got to say there were times I got stumped and went down the wrong rabbit holes, it’s important to be patient and take it slow.</p></div></div></section>
+</section>
+<footer><p>By <a href="https://medium.com/@alimuhammadsecured" class="p-author h-card">Alimuhammadsecured</a> on <a href="https://medium.com/p/9c95cd2cec6a"><time class="dt-published" datetime="2024-08-04T21:53:53.333Z">August 4, 2024</time></a>.</p><p><a href="https://medium.com/@alimuhammadsecured/2024-n00bzctf-file-sharing-portal-writeup-9c95cd2cec6a" class="p-canonical">Canonical link</a></p><p>Exported from <a href="https://medium.com">Medium</a> on August 14, 2024.</p></footer></article></body></html>

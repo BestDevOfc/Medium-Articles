@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>How I hacked a marriage database: tale of IDOR</title><style>
+      * {
+        font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        font-size: 50px;
+        margin-bottom: 17px;
+        color: #333;
+      }
+      h2 {
+        font-size: 24px;
+        line-height: 1.6;
+        margin: 30px 0 0 0;
+        margin-bottom: 18px;
+        margin-top: 33px;
+        color: #333;
+      }
+      h3 {
+        font-size: 30px;
+        margin: 10px 0 20px 0;
+        color: #333;
+      }
+      header {
+        width: 640px;
+        margin: auto;
+      }
+      section {
+        width: 640px;
+        margin: auto;
+      }
+      section p {
+        margin-bottom: 27px;
+        font-size: 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      section img {
+        max-width: 640px;
+      }
+      footer {
+        padding: 0 20px;
+        margin: 50px 0;
+        text-align: center;
+        font-size: 12px;
+      }
+      .aspectRatioPlaceholder {
+        max-width: auto !important;
+        max-height: auto !important;
+      }
+      .aspectRatioPlaceholder-fill {
+        padding-bottom: 0 !important;
+      }
+      header,
+      section[data-field=subtitle],
+      section[data-field=description] {
+        display: none;
+      }
+      </style></head><body><article class="h-entry">
+<header>
+<h1 class="p-name">How I hacked a marriage database: tale of IDOR</h1>
+</header>
+<section data-field="subtitle" class="p-summary">
+A Tale of IDOR, PII Disclosure, and Recon Tips
+</section>
+<section data-field="body" class="e-content">
+<section name="2a94" class="section section--body section--first section--last"><div class="section-divider"><hr class="section-divider"></div><div class="section-content"><div class="section-inner sectionLayout--insetColumn"><h3 name="97f9" id="97f9" class="graf graf--h3 graf--leading graf--title"><strong class="markup--strong markup--h3-strong">How I hacked a marriage database: tale of IDOR</strong></h3><h4 name="cbe6" id="cbe6" class="graf graf--h4 graf-after--h3 graf--subtitle">A Tale of IDOR, PII Disclosure, and Recon Tips</h4><p name="4c9a" id="4c9a" class="graf graf--p graf-after--h4"><strong class="markup--strong markup--p-strong">Connect with me on:</strong></p><p name="be85" id="be85" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong">Linkedin</strong>: <a href="https://www.linkedin.com/in/muhammadalisecured/" data-href="https://www.linkedin.com/in/muhammadalisecured/" class="markup--anchor markup--p-anchor" rel="noopener" target="_blank">https://www.linkedin.com/in/muhammadalisecured/</a></p><p name="8593" id="8593" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong">Twitter</strong>: <a href="https://x.com/ali_muhammadsec" data-href="https://x.com/ali_muhammadsec" class="markup--anchor markup--p-anchor" rel="noopener" target="_blank">https://x.com/ali_muhammadsec</a></p><p name="e5b3" id="e5b3" class="graf graf--p graf--hasDropCapModel graf--hasDropCap graf-after--p"><span class="graf-dropCap">T</span>his was a site focused on marriage and was not in the traditional dating scene. Moreover, it was fairly new with a great reputation and high customer loyalty. For privacy reasons, I cannot disclose the site name as they did not have a bug bounty and I did this out of curiosity. Therefore, we’ll refer to it as <strong class="markup--strong markup--p-strong">example.com.</strong></p><p name="2145" id="2145" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong"><em class="markup--em markup--p-em">How I found the bug</em></strong></p><p name="7026" id="7026" class="graf graf--p graf-after--p">Whenever I look at a target site I fire up a few tools in the background and visit the main domain to gauge the functionality with Burp Suite running. The recon I follow is the usual subdomain enumeration via passive and active.</p><blockquote name="d80c" id="d80c" class="graf graf--blockquote graf-after--p">Passive:</blockquote><blockquote name="e8a7" id="e8a7" class="graf graf--blockquote graf-after--blockquote"><em class="markup--em markup--blockquote-em">Subfinder</em></blockquote><blockquote name="074f" id="074f" class="graf graf--blockquote graf-after--blockquote"><em class="markup--em markup--blockquote-em">Security Trails</em></blockquote><blockquote name="20d7" id="20d7" class="graf graf--blockquote graf-after--blockquote"><em class="markup--em markup--blockquote-em">Netlas</em></blockquote><blockquote name="df90" id="df90" class="graf graf--blockquote graf-after--blockquote"><em class="markup--em markup--blockquote-em">Assetfinder</em></blockquote><blockquote name="da18" id="da18" class="graf graf--blockquote graf-after--blockquote"><em class="markup--em markup--blockquote-em">Google dorking</em></blockquote><blockquote name="4724" id="4724" class="graf graf--blockquote graf-after--blockquote"><em class="markup--em markup--blockquote-em">WaybackURLs</em></blockquote><blockquote name="29b0" id="29b0" class="graf graf--blockquote graf-after--blockquote">Active:</blockquote><blockquote name="996f" id="996f" class="graf graf--blockquote graf-after--blockquote">ffuf</blockquote><blockquote name="24f9" id="24f9" class="graf graf--blockquote graf-after--blockquote">Wordlist:</blockquote><blockquote name="a789" id="a789" class="graf graf--blockquote graf-after--blockquote">Primarily used SecLists curated by Daniel Miessler — here’s the <a href="https://github.com/danielmiessler/SecLists" data-href="https://github.com/danielmiessler/SecLists" class="markup--anchor markup--blockquote-anchor" rel="noopener" target="_blank">link</a>.</blockquote><p name="61dc" id="61dc" class="graf graf--p graf-after--blockquote">Some numerous writeups and tools explain each of these in-depth and can be found right here on Medium, I’d recommend reading <a href="https://medium.com/u/1aa8e5e705df" data-href="https://medium.com/u/1aa8e5e705df" data-anchor-type="2" data-user-id="1aa8e5e705df" data-action-value="1aa8e5e705df" data-action="show-user-card" data-action-type="hover" class="markup--user markup--p-user" target="_blank">Samet akıllı</a> writeups on “<a href="https://medium.com/@ssametakilli/all-about-recon-a80ac0b6eedc" data-href="https://medium.com/@ssametakilli/all-about-recon-a80ac0b6eedc" class="markup--anchor markup--p-anchor" target="_blank">All About Recon</a>”.</p><p name="0495" id="0495" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong"><em class="markup--em markup--p-em">Interesting Subdomains</em></strong></p><p name="6c39" id="6c39" class="graf graf--p graf-after--p">After playing around with the main site’s features such as resetting passwords, attempting OTP bypasses, looking for CSRF vulnerabilities, searched for leaked secrets in the source code, I couldn’t find anything!</p><p name="838b" id="838b" class="graf graf--p graf-after--p">However, I decided to take a look at the subdomains instead and ran them through HttpX to only focus on the live domains using this command:</p><blockquote name="0f50" id="0f50" class="graf graf--blockquote graf-after--p"><strong class="markup--strong markup--blockquote-strong"><em class="markup--em markup--blockquote-em">&gt; httpx -l subdomains.txt -o LiveSubdomains.txt -threads 200 -status-code -follow-redirects</em></strong></blockquote><p name="4c21" id="4c21" class="graf graf--p graf-after--blockquote">After scrolling through the live subdomains file generated by Httpx something caught my eye</p><p name="115f" id="115f" class="graf graf--p graf-after--p"><a href="https://admin.example.com" data-href="https://admin.example.com" class="markup--anchor markup--p-anchor" rel="noopener" target="_blank">https://<strong class="markup--strong markup--p-strong">admin</strong>.example.com</a></p><p name="46de" id="46de" class="graf graf--p graf-after--p">I assumed it was some sort of password-protected resource so I decided to open it in my browser and to my surprise there was no authentication!</p><p name="6fc8" id="6fc8" class="graf graf--p graf-after--p">However, it looked as if it was non-functional and asked for an email it seemed as if it was just for testing purposes and must’ve been forgotten. I decided to enter my email on the site and captured the request with Burp and I could not believe it!</p><figure name="9acb" id="9acb" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*mMSgErAA3E70coDNWc1hKA.png" data-width="828" data-height="462" data-is-featured="true" src="https://cdn-images-1.medium.com/max/800/1*mMSgErAA3E70coDNWc1hKA.png"></figure><p name="cf7e" id="cf7e" class="graf graf--p graf-after--figure">PII just from an email with no authentication !</p><p name="7067" id="7067" class="graf graf--p graf-after--p">I decided this was a good vulnerability to report and I emailed the support team ASAP who swiftly fixed the issue the same day and even went as far as getting on a call with me!</p><p name="3c5c" id="3c5c" class="graf graf--p graf-after--p"><strong class="markup--strong markup--p-strong"><em class="markup--em markup--p-em">How I discovered a critical IDOR</em></strong></p><p name="effc" id="effc" class="graf graf--p graf-after--p">An IDOR in the simplest terms is tricking the application into thinking you’re someone else and performing an action on someone else’s behalf. For example, let’s say there is a program with the functionality of deleting an account. The program needs to know WHO’s account to delete, and this is done from usually a username or unique ID. However, sometimes the application accepts the WHO part (such as a username) from the client side (us — attacker) and this allows us to pass in anyone’s username or ID with the possibility of severe damage being done to the service.</p><p name="0d2b" id="0d2b" class="graf graf--p graf-after--p">Fueled by motivation I decided I’d take a second look at the website with a fresh mind and re-try the whole process maybe discovering something new. To my surprise, there was one logic bug I did not discover the first time which was in the “Hide Profile” in settings.</p><p name="ac39" id="ac39" class="graf graf--p graf-after--p">The design of the site is that it uses an Authorization Bearer token (JWT) that refreshes every minute. Moreover, no users are passed for requests, the token is decrypted on the server and the data is parsed from it. This should leave IDORs out of the questions… right?</p><p name="a9ff" id="a9ff" class="graf graf--p graf-after--p">Well, developers make mistakes because writing thousands of lines of code isn’t easy especially when you’re constantly updating, and tweaking the source code. In this aspect, the developers for some reason passed in the UserID to hide your profile and the request body looked something like</p><figure name="aeee" id="aeee" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*IpcU8vJgMz15d-T0Ec-GXg.png" data-width="574" data-height="170" src="https://cdn-images-1.medium.com/max/800/1*IpcU8vJgMz15d-T0Ec-GXg.png"></figure><p name="0048" id="0048" class="graf graf--p graf-after--figure">I decided to replace my ID with someone else’s expecting it to hide someone else’s profile — and it did!</p><p name="4644" id="4644" class="graf graf--p graf-after--p">But then I looked at the request’s response and I could not believe it: it returned the user’s email, name, DOB, phone number, gender, and loads of more data. Therefore, by chaining the admin panel disclosure with the IDOR I could download the whole site’s database of users with data that is valuable for campaigns relating to phishing, robocalling, and more.</p><p name="a0f3" id="a0f3" class="graf graf--p graf-after--p">The userIDs were exposed in anyone’s profile, so a simple search and looking at the response this long string of userIDs were returned, of course bruteforcing these to cause a data breach would not be something practical or viable.</p><p name="93b9" id="93b9" class="graf graf--p graf-after--p">Obviously I reported this as soon as possible and got some swag from the developers and new connects!</p><p name="a639" id="a639" class="graf graf--p graf-after--p graf--trailing">So the moral of the story to take away from this writeup is to try numerous times, take breaks, and come back with a fresh mind and who knows what you’ll find!</p></div></div></section>
+</section>
+<footer><p>By <a href="https://medium.com/@alimuhammadsecured" class="p-author h-card">Alimuhammadsecured</a> on <a href="https://medium.com/p/b4f951d23aa6"><time class="dt-published" datetime="2024-06-14T04:42:55.629Z">June 14, 2024</time></a>.</p><p><a href="https://medium.com/@alimuhammadsecured/how-i-hacked-a-marriage-database-tale-of-idor-b4f951d23aa6" class="p-canonical">Canonical link</a></p><p>Exported from <a href="https://medium.com">Medium</a> on August 14, 2024.</p></footer></article></body></html>

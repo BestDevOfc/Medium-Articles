@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Solving Web Assembly CTF the “wrong” way.</title><style>
+      * {
+        font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        font-size: 50px;
+        margin-bottom: 17px;
+        color: #333;
+      }
+      h2 {
+        font-size: 24px;
+        line-height: 1.6;
+        margin: 30px 0 0 0;
+        margin-bottom: 18px;
+        margin-top: 33px;
+        color: #333;
+      }
+      h3 {
+        font-size: 30px;
+        margin: 10px 0 20px 0;
+        color: #333;
+      }
+      header {
+        width: 640px;
+        margin: auto;
+      }
+      section {
+        width: 640px;
+        margin: auto;
+      }
+      section p {
+        margin-bottom: 27px;
+        font-size: 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      section img {
+        max-width: 640px;
+      }
+      footer {
+        padding: 0 20px;
+        margin: 50px 0;
+        text-align: center;
+        font-size: 12px;
+      }
+      .aspectRatioPlaceholder {
+        max-width: auto !important;
+        max-height: auto !important;
+      }
+      .aspectRatioPlaceholder-fill {
+        padding-bottom: 0 !important;
+      }
+      header,
+      section[data-field=subtitle],
+      section[data-field=description] {
+        display: none;
+      }
+      </style></head><body><article class="h-entry">
+<header>
+<h1 class="p-name">Solving Web Assembly CTF the “wrong” way.</h1>
+</header>
+<section data-field="subtitle" class="p-summary">
+How I solved a CTF challenge that uses a Web Assembly module (Binary that’s loaded with JS) to read the flag directly from memory instead…
+</section>
+<section data-field="body" class="e-content">
+<section name="59dd" class="section section--body section--first section--last"><div class="section-divider"><hr class="section-divider"></div><div class="section-content"><div class="section-inner sectionLayout--insetColumn"><h3 name="6534" id="6534" class="graf graf--h3 graf--leading graf--title">Solving Web Assembly CTF the “wrong” way.</h3><p name="cc02" id="cc02" class="graf graf--p graf-after--h3">How I solved a CTF challenge that uses a Web Assembly module (Binary that’s loaded with JS) to read the flag directly from memory instead of decrypting the flag like I was supposed to.</p><figure name="f13a" id="f13a" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*fGqJMgxJJ7XOsOj4IQNa3w.png" data-width="1058" data-height="780" data-is-featured="true" src="https://cdn-images-1.medium.com/max/800/1*fGqJMgxJJ7XOsOj4IQNa3w.png"></figure><p name="3e1b" id="3e1b" class="graf graf--p graf-after--figure">The website has some JS code that checks if our input is the flag, the JS code is minified, so I use a <a href="https://beautifier.io/" data-href="https://beautifier.io/" class="markup--anchor markup--p-anchor" rel="noopener" target="_blank">JSbeautifier</a> to get this:</p><figure name="8bc2" id="8bc2" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*obqP75uVKVej7l76jKwmnA.png" data-width="2294" data-height="1320" src="https://cdn-images-1.medium.com/max/800/1*obqP75uVKVej7l76jKwmnA.png"><figcaption class="imageCaption">All the code is on my <a href="https://github.com/BestDevOfc/CTF_and_Hacking_Code/tree/main/webAssembly/XOR_reading_memory" data-href="https://github.com/BestDevOfc/CTF_and_Hacking_Code/tree/main/webAssembly/XOR_reading_memory" class="markup--anchor markup--figure-anchor" rel="noopener" target="_blank">Github</a></figcaption></figure><p name="1fa6" id="1fa6" class="graf graf--p graf-after--figure">I then do what I always do, I renamed variables, functions, mapped out the strings, until I got this:</p><figure name="4ee2" id="4ee2" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*oFeb6HezExOZn9IzCZwMfg.png" data-width="1950" data-height="1304" src="https://cdn-images-1.medium.com/max/800/1*oFeb6HezExOZn9IzCZwMfg.png"></figure><p name="1355" id="1355" class="graf graf--p graf-after--figure">So what this JS code is doing is it’s downlaoding a web Assembly binary from their server and compiling it into a JS module. This module is stored in the <strong class="markup--strong markup--p-strong">exports</strong> global variable.</p><p name="9543" id="9543" class="graf graf--p graf-after--p">So I decided to take a peek inside of this variable in the console of the website so I could see the WASM JS code.</p><figure name="1c70" id="1c70" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*byoevluVZr61t_o5MQiz2g.png" data-width="1714" data-height="628" src="https://cdn-images-1.medium.com/max/800/1*byoevluVZr61t_o5MQiz2g.png"></figure><figure name="b9dd" id="b9dd" class="graf graf--figure graf-after--figure"><img class="graf-image" data-image-id="1*ZKM8uw-HfF-vsV5JcKlnhw.png" data-width="1256" data-height="800" src="https://cdn-images-1.medium.com/max/800/1*ZKM8uw-HfF-vsV5JcKlnhw.png"></figure><p name="6502" id="6502" class="graf graf--p graf-after--figure">Now if you know Assembly then you know that the var0 is being set to the memory location at 1072 and var1 is being set to 1024 the they’re being compared. That’s interesting, so I decided to read the memory locations at these two cells in JS.</p><figure name="1958" id="1958" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*CwkGNbQqHXNCHO0VHe0jPA.png" data-width="1760" data-height="794" src="https://cdn-images-1.medium.com/max/800/1*CwkGNbQqHXNCHO0VHe0jPA.png"><figcaption class="imageCaption">openAi.com generated this, if you don’t know JS that’s ok, neither do I!</figcaption></figure><figure name="8596" id="8596" class="graf graf--figure graf-after--figure"><img class="graf-image" data-image-id="1*PuOxLajTuiCRPr9looL2oQ.png" data-width="564" data-height="58" src="https://cdn-images-1.medium.com/max/800/1*PuOxLajTuiCRPr9looL2oQ.png"></figure><p name="f0f9" id="f0f9" class="graf graf--p graf-after--figure">Hmm, that’s not the flag. So that’s when I realized that the copyChar function inside of the WASM actually performs XOR operations on our input and then the checkflag function is called with <strong class="markup--strong markup--p-strong">no inputs, it just reads the memory location at 1072.</strong></p><figure name="30da" id="30da" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*LBSF8zCqL24La2OQRv6JpA.png" data-width="958" data-height="314" src="https://cdn-images-1.medium.com/max/800/1*LBSF8zCqL24La2OQRv6JpA.png"></figure><p name="3541" id="3541" class="graf graf--p graf-after--figure">So then I started looking for an encrypted string in the WASM.</p><figure name="e63d" id="e63d" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*QfvnfqQ7y4jabZzFq4XbuA.png" data-width="1264" data-height="138" src="https://cdn-images-1.medium.com/max/800/1*QfvnfqQ7y4jabZzFq4XbuA.png"></figure><p name="b776" id="b776" class="graf graf--p graf-after--figure">Here this long encrypted string is being stored at memory location <strong class="markup--strong markup--p-strong">1024</strong>. Therefore, I entered this into the site so that the flag would be decrypted by the <strong class="markup--strong markup--p-strong">copy_char</strong> function as a side effect (using the function against itself).</p><figure name="ca62" id="ca62" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*D1QQxYMGpooW1uaDhfRgMQ.png" data-width="334" data-height="200" src="https://cdn-images-1.medium.com/max/800/1*D1QQxYMGpooW1uaDhfRgMQ.png"></figure><p name="f43c" id="f43c" class="graf graf--p graf-after--figure">Okay now that this input has been XORed and checked using STRCMP the memory location at 1072 should have the decrypted flag now.</p><figure name="6536" id="6536" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*jHfscq4XO7EpyazxyAo-fw.png" data-width="1500" data-height="172" src="https://cdn-images-1.medium.com/max/800/1*jHfscq4XO7EpyazxyAo-fw.png"></figure><h3 name="32bd" id="32bd" class="graf graf--h3 graf-after--figure">The “Right” way</h3><p name="751c" id="751c" class="graf graf--p graf-after--h3">We could’ve simply just taken this XOR encrypted string and used a XOR-bruteforcer in <a href="https://gchq.github.io/CyberChef/" data-href="https://gchq.github.io/CyberChef/" class="markup--anchor markup--p-anchor" rel="noopener" target="_blank"><strong class="markup--strong markup--p-strong">cyberchef</strong></a></p><figure name="9948" id="9948" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*98kxU5Nf-glGoqxRgIKSRA.png" data-width="3024" data-height="1484" src="https://cdn-images-1.medium.com/max/800/1*98kxU5Nf-glGoqxRgIKSRA.png"></figure><p name="bdf4" id="bdf4" class="graf graf--p graf-after--figure">Moral of the story:</p><ol class="postList"><li name="c9af" id="c9af" class="graf graf--li graf-after--p">there is NEVER only one way to solve a challenge</li><li name="f711" id="f711" class="graf graf--li graf-after--li graf--trailing">Read writeups if you don’t fully understand why everything works</li></ol></div></div></section>
+</section>
+<footer><p>By <a href="https://medium.com/@alimuhammadsecured" class="p-author h-card">Alimuhammadsecured</a> on <a href="https://medium.com/p/f8669eb9f17c"><time class="dt-published" datetime="2024-08-14T22:51:21.707Z">August 14, 2024</time></a>.</p><p><a href="https://medium.com/@alimuhammadsecured/solving-web-assembly-ctf-the-wrong-way-f8669eb9f17c" class="p-canonical">Canonical link</a></p><p>Exported from <a href="https://medium.com">Medium</a> on August 14, 2024.</p></footer></article></body></html>

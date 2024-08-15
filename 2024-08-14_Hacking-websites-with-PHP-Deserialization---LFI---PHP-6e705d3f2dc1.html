@@ -1,0 +1,72 @@
+<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><title>Hacking websites with PHP Deserialization + LFI + PHP</title><style>
+      * {
+        font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+      }
+      h1 {
+        font-size: 50px;
+        margin-bottom: 17px;
+        color: #333;
+      }
+      h2 {
+        font-size: 24px;
+        line-height: 1.6;
+        margin: 30px 0 0 0;
+        margin-bottom: 18px;
+        margin-top: 33px;
+        color: #333;
+      }
+      h3 {
+        font-size: 30px;
+        margin: 10px 0 20px 0;
+        color: #333;
+      }
+      header {
+        width: 640px;
+        margin: auto;
+      }
+      section {
+        width: 640px;
+        margin: auto;
+      }
+      section p {
+        margin-bottom: 27px;
+        font-size: 20px;
+        line-height: 1.6;
+        color: #333;
+      }
+      section img {
+        max-width: 640px;
+      }
+      footer {
+        padding: 0 20px;
+        margin: 50px 0;
+        text-align: center;
+        font-size: 12px;
+      }
+      .aspectRatioPlaceholder {
+        max-width: auto !important;
+        max-height: auto !important;
+      }
+      .aspectRatioPlaceholder-fill {
+        padding-bottom: 0 !important;
+      }
+      header,
+      section[data-field=subtitle],
+      section[data-field=description] {
+        display: none;
+      }
+      </style></head><body><article class="h-entry">
+<header>
+<h1 class="p-name">Hacking websites with PHP Deserialization + LFI + PHP</h1>
+</header>
+<section data-field="subtitle" class="p-summary">
+Using PHP(S) files -&gt; source files instead of PHP to bypass WAF to access source code. From there a deserialization vulnerability can be…
+</section>
+<section data-field="body" class="e-content">
+<section name="6007" class="section section--body section--first section--last"><div class="section-divider"><hr class="section-divider"></div><div class="section-content"><div class="section-inner sectionLayout--insetColumn"><h3 name="2a77" id="2a77" class="graf graf--h3 graf--leading graf--title">Hacking websites with PHP Deserialization + LFI + PHP(S)</h3><p name="b64f" id="b64f" class="graf graf--p graf-after--h3">Using PHP(S) files -&gt; source files instead of PHP to bypass WAF to access source code. From there a deserialization vulnerability can be abused.</p><figure name="ee20" id="ee20" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*bRM0rRE-Ltrx-fhaj668ng.png" data-width="1278" data-height="238" data-is-featured="true" src="https://cdn-images-1.medium.com/max/800/1*bRM0rRE-Ltrx-fhaj668ng.png"></figure><p name="09e9" id="09e9" class="graf graf--p graf-after--figure">Here we see an admin.phps is not allowed to be spidered. When visiting it it does not exist. There is an LFI because if we do URL encoding and try to access /etc/passwd we get forbidden</p><figure name="640e" id="640e" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*lCnzYpUaeGGs_fTzYQPHmg.png" data-width="2376" data-height="316" src="https://cdn-images-1.medium.com/max/800/1*lCnzYpUaeGGs_fTzYQPHmg.png"></figure><p name="8fdd" id="8fdd" class="graf graf--p graf-after--figure">I tried <strong class="markup--strong markup--p-strong">everything to bypass this 403, no success.</strong></p><p name="732b" id="732b" class="graf graf--p graf-after--p">That’s when I realized it was weird how the admin.phps had an <strong class="markup--strong markup--p-strong">“S”. </strong>A PHPS file is known as a PHP SOURCE FILES, these are dangerous if left publicly accessible because properly configured servers will <strong class="markup--strong markup--p-strong">NOT </strong>execute this filetype, but will display it as a cleartext file. Therefore, we can use our LFI to view index.phps, which takes us to a few more PHP files.</p><figure name="2d09" id="2d09" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*giFb6qYq2G5TohVDENDFWw.png" data-width="1150" data-height="332" src="https://cdn-images-1.medium.com/max/800/1*giFb6qYq2G5TohVDENDFWw.png"></figure><p name="8df5" id="8df5" class="graf graf--p graf-after--figure">There is an <strong class="markup--strong markup--p-strong">authentication.php</strong> route, so when I went there I was served this page:</p><figure name="77ad" id="77ad" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*PncCeffkE2MeZ0FG5Y-GWQ.png" data-width="1370" data-height="570" src="https://cdn-images-1.medium.com/max/800/1*PncCeffkE2MeZ0FG5Y-GWQ.png"></figure><p name="edb0" id="edb0" class="graf graf--p graf-after--figure">That’s when I realized I most likely need to trick the server into thinking I’m an admin.</p><p name="e168" id="e168" class="graf graf--p graf-after--p">The code that checks if I’m admin:</p><figure name="d0fb" id="d0fb" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*3fkSpJSTk5lJe12gAkabcg.png" data-width="714" data-height="74" src="https://cdn-images-1.medium.com/max/800/1*3fkSpJSTk5lJe12gAkabcg.png"></figure><p name="17f1" id="17f1" class="graf graf--p graf-after--figure">The <strong class="markup--strong markup--p-strong">$perm object code:</strong></p><figure name="a6f0" id="a6f0" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*K1En9a8g1jjhe27JS6RC2Q.png" data-width="1712" data-height="636" src="https://cdn-images-1.medium.com/max/800/1*K1En9a8g1jjhe27JS6RC2Q.png"></figure><p name="9bc6" id="9bc6" class="graf graf--p graf-after--figure">As you can see there is an object being deserialized, this opens a <strong class="markup--strong markup--p-strong">deserialization PHP vulnerability.</strong> That’s why the name of the CTF challeneg is <strong class="markup--strong markup--p-strong">Super Serial.</strong> After an hour of using my own serialized objects to always return <strong class="markup--strong markup--p-strong">True </strong>for the <strong class="markup--strong markup--p-strong">is_admin() </strong>function it wouldn’t work.</p><p name="7454" id="7454" class="graf graf--p graf-after--p">After some research it turns out we need to abuse the class <strong class="markup--strong markup--p-strong">access_log</strong> and pass in the flag route to get our flag.</p><figure name="d8d3" id="d8d3" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*Z5imaclAosI3DOHxVrkD4w.png" data-width="1334" data-height="1202" src="https://cdn-images-1.medium.com/max/800/1*Z5imaclAosI3DOHxVrkD4w.png"></figure><p name="4232" id="4232" class="graf graf--p graf-after--figure">This is my PHP code that just serializes the object into base64.</p><figure name="52ac" id="52ac" class="graf graf--figure graf-after--p"><img class="graf-image" data-image-id="1*_5lQraIeafaEKjWwXVQIAw.png" data-width="1618" data-height="284" src="https://cdn-images-1.medium.com/max/800/1*_5lQraIeafaEKjWwXVQIAw.png"></figure><figure name="7af8" id="7af8" class="graf graf--figure graf-after--figure"><img class="graf-image" data-image-id="1*j_-NTVXbJmn2nY-f5Du56Q.png" data-width="1262" data-height="260" src="https://cdn-images-1.medium.com/max/800/1*j_-NTVXbJmn2nY-f5Du56Q.png"><figcaption class="imageCaption">Used google extension <strong class="markup--strong markup--figure-strong">COOKIE EDITOR.</strong></figcaption></figure><p name="4a05" id="4a05" class="graf graf--p graf-after--figure">Some Critical Pointers:</p><ol class="postList"><li name="c545" id="c545" class="graf graf--li graf-after--p">In Deserialization it is possible to get RCE but not by just creating your own class. That’s why our own modified function of is_admin() did not work, because it just uses an existing class name. For example, when we decode and inspect our serialized object this is what it looks like:</li></ol><figure name="b244" id="b244" class="graf graf--figure graf-after--li"><img class="graf-image" data-image-id="1*e_rw0oIGRkq3l0XCxVpF7A.png" data-width="746" data-height="134" src="https://cdn-images-1.medium.com/max/800/1*e_rw0oIGRkq3l0XCxVpF7A.png"><figcaption class="imageCaption">The actual code is not being serialized but the placement of the object, parameters, etc. Attempting to deserialize a class that does not exist in PHP will throw an error and this can be tested locally.</figcaption></figure><ol class="postList"><li name="5a05" id="5a05" class="graf graf--li graf-after--figure graf--trailing">These exploits can be tricky because they rely heavily on the source code already present, so if there’s no functions or objects that can be leveraged then it could signal a dead end.</li></ol></div></div></section>
+</section>
+<footer><p>By <a href="https://medium.com/@alimuhammadsecured" class="p-author h-card">Alimuhammadsecured</a> on <a href="https://medium.com/p/6e705d3f2dc1"><time class="dt-published" datetime="2024-08-14T00:10:43.005Z">August 14, 2024</time></a>.</p><p><a href="https://medium.com/@alimuhammadsecured/hacking-websites-with-php-deserialization-lfi-php-6e705d3f2dc1" class="p-canonical">Canonical link</a></p><p>Exported from <a href="https://medium.com">Medium</a> on August 14, 2024.</p></footer></article></body></html>
